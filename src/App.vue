@@ -2,17 +2,17 @@
 </script>
 
 <template>
-  <main class="min-h-screen flex items-center justify-center bg-base-200 p-6">
-    <div class="card w-full max-w-md bg-base-100 shadow-xl">
-      <div class="card-body items-center text-center">
-        <h1 class="card-title text-2xl">product-radar</h1>
-        <p class="text-base-content/70">
-          Compare up to 5 Profiles across 3–7 Criteria on a 0–5 scale.
-        </p>
-        <div class="card-actions mt-4">
-          <button class="btn btn-primary" disabled>New Radar — coming soon</button>
-        </div>
+  <div class="min-h-screen bg-base-200 flex flex-col">
+    <header class="bg-base-100 border-b border-base-300">
+      <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <router-link to="/" class="text-xl font-semibold tracking-tight">
+          product-radar
+        </router-link>
+        <span class="text-xs text-base-content/50">browser-local · 0–5 scale</span>
       </div>
-    </div>
-  </main>
+    </header>
+    <main class="flex-1">
+      <router-view />
+    </main>
+  </div>
 </template>
