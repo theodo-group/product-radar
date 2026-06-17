@@ -1,15 +1,17 @@
-import { ref, watch } from 'vue'
-import type { Radar, Criterion, Profile } from './types'
-import { MIN_CRITERIA, MIN_PROFILES, PROFILE_PALETTE } from './types'
+import { ref, watch } from "vue"
+import type { Radar, Criterion, Profile } from "./types.ts"
+import { MIN_CRITERIA, MIN_PROFILES, PROFILE_PALETTE } from "./types.ts"
 
-const STORAGE_KEY = 'product-radar:radars'
+const STORAGE_KEY = "product-radar:radars"
 
 function loadAll(): Radar[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
+    if (!Array.isArray(parsed)) return []
+    // Default concept for radars saved before the field existed.
+    return parsed.map((r: Radar) => ({ ...r, concept: r.concept ?? "" }))
   } catch {
     return []
   }
@@ -29,12 +31,16 @@ function uid(): string {
   return crypto.randomUUID()
 }
 
-function blankCriterion(name = ''): Criterion {
+function blankCriterion(name = ""): Criterion {
   return { id: uid(), name }
 }
 
-function blankProfile(name = '', colorIndex = 0): Profile {
-  return { id: uid(), name, color: PROFILE_PALETTE[colorIndex % PROFILE_PALETTE.length] }
+function blankProfile(name = "", colorIndex = 0): Profile {
+  return {
+    id: uid(),
+    name,
+    color: PROFILE_PALETTE[colorIndex % PROFILE_PALETTE.length],
+  }
 }
 
 function ensureScores(radar: Radar): void {
@@ -69,7 +75,7 @@ export function useRadars() {
     return radars.value.find((r) => r.id === id)
   }
 
-  function createBlank(name = 'Untitled radar'): Radar {
+  function createBlank(name = "Untitled radar"): Radar {
     const criteria: Criterion[] = []
     for (let i = 0; i < MIN_CRITERIA; i++) criteria.push(blankCriterion(`Criterion ${i + 1}`))
 
@@ -80,6 +86,7 @@ export function useRadars() {
     const radar: Radar = {
       id: uid(),
       name,
+      concept: "",
       criteria,
       profiles,
       scores: {},

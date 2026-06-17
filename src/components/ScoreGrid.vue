@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Radar } from '../types'
-import { MIN_SCORE, MAX_SCORE } from '../types'
-import { useRadars } from '../storage'
+import type { Radar } from "../types"
+import { MIN_SCORE, MAX_SCORE } from "../types"
+import { useRadars } from "../storage"
 
 const props = defineProps<{ radar: Radar }>()
 const { update } = useRadars()
@@ -24,16 +24,14 @@ function setScore(profileId: string, criterionId: string, value: number): void {
 <template>
   <section>
     <h2 class="text-lg font-semibold mb-2">Scores</h2>
-    <p class="text-xs text-base-content/60 mb-3">
-      0 = worst on this Criterion, 5 = best.
-    </p>
+    <p class="text-xs text-base-content/60 mb-3">0 = worst on this Criterion, 5 = best.</p>
     <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
       <table class="table table-sm">
         <thead>
           <tr>
             <th class="text-left">Profile \ Criterion</th>
             <th v-for="c in radar.criteria" :key="c.id" class="text-left">
-              {{ c.name || 'Untitled' }}
+              {{ c.name || "Untitled" }}
             </th>
           </tr>
         </thead>
@@ -45,7 +43,7 @@ function setScore(profileId: string, criterionId: string, value: number): void {
                 :style="{ background: p.color }"
                 aria-hidden="true"
               />
-              {{ p.name || 'Untitled' }}
+              {{ p.name || "Untitled" }}
             </td>
             <td v-for="c in radar.criteria" :key="c.id">
               <div class="flex gap-1">
@@ -54,9 +52,7 @@ function setScore(profileId: string, criterionId: string, value: number): void {
                   :key="value"
                   type="button"
                   class="btn btn-xs"
-                  :class="
-                    getScore(p.id, c.id) === value ? 'btn-primary' : 'btn-ghost'
-                  "
+                  :class="getScore(p.id, c.id) === value ? 'btn-primary' : 'btn-ghost'"
                   @click="setScore(p.id, c.id, value)"
                   :aria-label="`Score ${value} for ${p.name} on ${c.name}`"
                 >

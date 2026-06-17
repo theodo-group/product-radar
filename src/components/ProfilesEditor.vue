@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Radar } from '../types'
-import { MIN_PROFILES, MAX_PROFILES, PROFILE_PALETTE } from '../types'
-import { useRadars } from '../storage'
+import type { Radar } from "../types"
+import { MIN_PROFILES, MAX_PROFILES, PROFILE_PALETTE } from "../types"
+import { useRadars } from "../storage"
 
 const props = defineProps<{ radar: Radar }>()
 const { update, blankProfile } = useRadars()
@@ -71,9 +71,7 @@ function setColor(profileId: string, color: string): void {
             :disabled="radar.profiles.length <= MIN_PROFILES"
             @click="removeProfile(p.id)"
             :title="
-              radar.profiles.length <= MIN_PROFILES
-                ? `Minimum ${MIN_PROFILES} profile`
-                : 'Remove'
+              radar.profiles.length <= MIN_PROFILES ? `Minimum ${MIN_PROFILES} profile` : 'Remove'
             "
           >
             ✕

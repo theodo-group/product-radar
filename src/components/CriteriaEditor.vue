@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Radar } from '../types'
-import { MIN_CRITERIA, MAX_CRITERIA } from '../types'
-import { useRadars } from '../storage'
+import type { Radar } from "../types"
+import { MIN_CRITERIA, MAX_CRITERIA } from "../types"
+import { useRadars } from "../storage"
 
 const props = defineProps<{ radar: Radar }>()
 const { update, blankCriterion } = useRadars()
@@ -37,15 +37,10 @@ function renameCriterion(criterionId: string, name: string): void {
       </span>
     </div>
     <p class="text-xs text-base-content/60 mb-3">
-      Phrase each Criterion so higher is better (e.g. <em>Affordability</em>, not
-      <em>Price</em>).
+      Phrase each Criterion so higher is better (e.g. <em>Affordability</em>, not <em>Price</em>).
     </p>
     <ul class="flex flex-col gap-2">
-      <li
-        v-for="c in radar.criteria"
-        :key="c.id"
-        class="flex items-center gap-2"
-      >
+      <li v-for="c in radar.criteria" :key="c.id" class="flex items-center gap-2">
         <input
           type="text"
           class="input input-bordered input-sm flex-1"
@@ -58,9 +53,7 @@ function renameCriterion(criterionId: string, name: string): void {
           :disabled="radar.criteria.length <= MIN_CRITERIA"
           @click="removeCriterion(c.id)"
           :title="
-            radar.criteria.length <= MIN_CRITERIA
-              ? `Minimum ${MIN_CRITERIA} criteria`
-              : 'Remove'
+            radar.criteria.length <= MIN_CRITERIA ? `Minimum ${MIN_CRITERIA} criteria` : 'Remove'
           "
         >
           ✕

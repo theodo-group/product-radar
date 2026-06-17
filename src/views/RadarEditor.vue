@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue'
-import { useRouter } from 'vue-router'
-import { useRadars } from '../storage'
-import RadarChart from '../components/RadarChart.vue'
-import CriteriaEditor from '../components/CriteriaEditor.vue'
-import ProfilesEditor from '../components/ProfilesEditor.vue'
-import ScoreGrid from '../components/ScoreGrid.vue'
-import { svgToPngBlob, downloadBlob, copyBlobToClipboard, slugify } from '../utils/png'
+import { computed, ref, watchEffect } from "vue"
+import { useRouter } from "vue-router"
+import { useRadars } from "../storage"
+import RadarChart from "../components/RadarChart.vue"
+import CriteriaEditor from "../components/CriteriaEditor.vue"
+import ProfilesEditor from "../components/ProfilesEditor.vue"
+import ScoreGrid from "../components/ScoreGrid.vue"
+import { svgToPngBlob, downloadBlob, copyBlobToClipboard, slugify } from "../utils/png"
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
@@ -16,7 +16,7 @@ const radar = computed(() => get(props.id))
 
 watchEffect(() => {
   if (!radar.value) {
-    router.replace({ name: 'list' })
+    router.replace({ name: "list" })
   }
 })
 
@@ -26,10 +26,16 @@ function setName(name: string): void {
   })
 }
 
-const chartContainer = ref<HTMLElement | null>(null)
-const toast = ref<{ kind: 'success' | 'error'; text: string } | null>(null)
+function setConcept(concept: string): void {
+  update(props.id, (r) => {
+    r.concept = concept
+  })
+}
 
-function flash(kind: 'success' | 'error', text: string, ms = 2200): void {
+const chartContainer = ref<HTMLElement | null>(null)
+const toast = ref<{ kind: "success" | "error"; text: string } | null>(null)
+
+function flash(kind: "success" | "error", text: string, ms = 2200): void {
   toast.value = { kind, text }
   setTimeout(() => {
     toast.value = null
@@ -37,7 +43,7 @@ function flash(kind: 'success' | 'error', text: string, ms = 2200): void {
 }
 
 function getSvg(): SVGSVGElement | null {
-  return chartContainer.value?.querySelector('svg') ?? null
+  return chartContainer.value?.querySelector("svg") ?? null
 }
 
 async function downloadPng(): Promise<void> {
@@ -46,10 +52,10 @@ async function downloadPng(): Promise<void> {
   try {
     const blob = await svgToPngBlob(svg, 2)
     downloadBlob(blob, `${slugify(radar.value.name)}.png`)
-    flash('success', 'PNG downloaded')
+    flash("success", "PNG downloaded")
   } catch (err) {
     console.error(err)
-    flash('error', 'Could not export PNG')
+    flash("error", "Could not export PNG")
   }
 }
 
@@ -59,10 +65,10 @@ async function copyPng(): Promise<void> {
   try {
     const blob = await svgToPngBlob(svg, 2)
     await copyBlobToClipboard(blob)
-    flash('success', 'Copied to clipboard')
+    flash("success", "Copied to clipboard")
   } catch (err) {
     console.error(err)
-    flash('error', 'Clipboard copy not supported here — try Download')
+    flash("error", "Clipboard copy not supported here — try Download")
   }
 }
 </script>
@@ -70,19 +76,29 @@ async function copyPng(): Promise<void> {
 <template>
   <section v-if="radar" class="max-w-6xl mx-auto px-6 py-8">
     <!-- Top bar -->
-    <div class="flex flex-wrap items-center gap-3 mb-6">
-      <button class="btn btn-ghost btn-sm" @click="router.push({ name: 'list' })">
+    <div class="flex flex-wrap items-start gap-3 mb-6">
+      <button class="btn btn-ghost btn-sm mt-1" @click="router.push({ name: 'list' })">
         ← All radars
       </button>
-      <input
-        type="text"
-        class="input input-bordered input-lg flex-1 min-w-[200px] font-semibold"
-        :value="radar.name"
-        @input="setName(($event.target as HTMLInputElement).value)"
-        placeholder="Untitled radar"
-        aria-label="Radar name"
-      />
-      <div class="flex gap-2">
+      <div class="flex-1 min-w-[200px] flex flex-col gap-2">
+        <input
+          type="text"
+          class="input input-bordered input-lg font-semibold"
+          :value="radar.name"
+          @input="setName(($event.target as HTMLInputElement).value)"
+          placeholder="Untitled radar"
+          aria-label="Radar name"
+        />
+        <input
+          type="text"
+          class="input input-bordered input-sm"
+          :value="radar.concept"
+          @input="setConcept(($event.target as HTMLInputElement).value)"
+          placeholder="Concept — name the product and its typical performances"
+          aria-label="Radar concept"
+        />
+      </div>
+      <div class="flex gap-2 mt-1">
         <button class="btn btn-outline" @click="copyPng">Copy PNG</button>
         <button class="btn btn-primary" @click="downloadPng">Download PNG</button>
       </div>
@@ -90,10 +106,7 @@ async function copyPng(): Promise<void> {
 
     <!-- Toast -->
     <div v-if="toast" class="mb-4">
-      <div
-        class="alert"
-        :class="toast.kind === 'success' ? 'alert-success' : 'alert-error'"
-      >
+      <div class="alert" :class="toast.kind === 'success' ? 'alert-success' : 'alert-error'">
         <span>{{ toast.text }}</span>
       </div>
     </div>

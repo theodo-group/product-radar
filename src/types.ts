@@ -12,6 +12,8 @@ export type Profile = {
 export type Radar = {
   id: string
   name: string
+  /** Short subtitle naming the product and its typical performances. May be empty. */
+  concept: string
   criteria: Criterion[]
   profiles: Profile[]
   /** scores[profileId][criterionId] = 0..5 */
@@ -28,12 +30,12 @@ export const MIN_SCORE = 0
 export const MAX_SCORE = 5
 
 export const PROFILE_PALETTE = [
-  '#e11d48', // rose-600
-  '#2563eb', // blue-600
-  '#059669', // emerald-600
-  '#d97706', // amber-600
-  '#7c3aed', // violet-600
-  '#0891b2', // cyan-600
-  '#db2777', // pink-600
-  '#65a30d', // lime-600
+  "#e11d48", // rose-600
+  "#2563eb", // blue-600
+  "#059669", // emerald-600
+  "#d97706", // amber-600
+  "#7c3aed", // violet-600
+  "#0891b2", // cyan-600
+  "#db2777", // pink-600
+  "#65a30d", // lime-600
 ] as const

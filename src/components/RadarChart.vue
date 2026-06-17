@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Radar } from '../types'
-import { MAX_SCORE } from '../types'
+import { computed } from "vue"
+import type { Radar } from "../types"
+import { MAX_SCORE } from "../types"
 
 const props = withDefaults(
   defineProps<{
@@ -14,7 +14,43 @@ const props = withDefaults(
 
 const WIDTH = 720
 const HEIGHT = computed(() => (props.withChrome === false ? 600 : 800))
-const TITLE_H = computed(() => (props.withChrome === false ? 0 : 60))
+
+const subtitleText = computed(() => props.radar.concept?.trim() ?? "")
+
+const SUBTITLE_SINGLE_LINE_MAX = 64
+
+function wrapToTwoLines(text: string): string[] {
+  const words = text.split(/\s+/).filter(Boolean)
+  if (words.length < 2) return [text]
+  let bestSplit = 1
+  let bestDiff = Infinity
+  for (let i = 1; i < words.length; i++) {
+    const diff = Math.abs(words.slice(0, i).join(" ").length - words.slice(i).join(" ").length)
+    if (diff < bestDiff) {
+      bestDiff = diff
+      bestSplit = i
+    }
+  }
+  return [words.slice(0, bestSplit).join(" "), words.slice(bestSplit).join(" ")]
+}
+
+// 0 lines = no concept, 1 = fits, 2 = wrapped.
+const subtitleLines = computed<string[]>(() => {
+  const text = subtitleText.value
+  if (props.withChrome === false || !text) return []
+  return text.length <= SUBTITLE_SINGLE_LINE_MAX ? [text] : wrapToTwoLines(text)
+})
+
+const TITLE_H = computed(() => {
+  if (props.withChrome === false) return 0
+  const n = subtitleLines.value.length
+  return n === 0 ? 60 : n === 1 ? 92 : 116
+})
+
+const titleY = computed(() => (subtitleLines.value.length === 0 ? TITLE_H.value / 2 + 4 : 32))
+const subtitleFontSize = computed(() => (subtitleLines.value.length > 1 ? 14 : 16))
+const subtitleStartY = computed(() => (subtitleLines.value.length > 1 ? 56 : 64))
+const subtitleLineHeight = computed(() => (subtitleLines.value.length > 1 ? 18 : 0))
 const LEGEND_H = computed(() => (props.withChrome === false ? 0 : 120))
 const CHART_TOP = computed(() => TITLE_H.value)
 const CHART_BOTTOM = computed(() => HEIGHT.value - LEGEND_H.value)
@@ -47,7 +83,7 @@ const ringPaths = computed<string[]>(() => {
   if (total < 3) return []
   return [0.2, 0.4, 0.6, 0.8, 1].map((ratio) => {
     const pts = Array.from({ length: total }, (_, i) => pointOnAxis(i, total, ratio))
-    return pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+    return pts.map((p, idx) => `${idx === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") + " Z"
   })
 })
 
@@ -67,13 +103,12 @@ const profileShapes = computed<ProfileShape[]>(() => {
       const score = props.radar.scores[profile.id]?.[criterion.id] ?? 0
       return pointOnAxis(i, total, score / MAX_SCORE)
     })
-    const path =
-      vertices.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+    const path = vertices.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") + " Z"
     return { id: profile.id, name: profile.name, color: profile.color, path, vertices }
   })
 })
 
-type Label = { x: number; y: number; anchor: 'start' | 'middle' | 'end'; text: string; dy: string }
+type Label = { x: number; y: number; anchor: "start" | "middle" | "end"; text: string; dy: string }
 
 const criterionLabels = computed<Label[]>(() => {
   const total = props.radar.criteria.length
@@ -83,14 +118,14 @@ const criterionLabels = computed<Label[]>(() => {
     const x = CHART_CX + Math.cos(angle) * labelRadius
     const y = CHART_CY.value + Math.sin(angle) * labelRadius
     const cosA = Math.cos(angle)
-    let anchor: 'start' | 'middle' | 'end' = 'middle'
-    if (cosA > 0.2) anchor = 'start'
-    else if (cosA < -0.2) anchor = 'end'
+    let anchor: "start" | "middle" | "end" = "middle"
+    if (cosA > 0.2) anchor = "start"
+    else if (cosA < -0.2) anchor = "end"
     const sinA = Math.sin(angle)
-    let dy = '0.35em'
-    if (sinA < -0.5) dy = '0em'
-    else if (sinA > 0.5) dy = '0.7em'
-    return { x, y, anchor, text: criterion.name || 'Untitled', dy }
+    let dy = "0.35em"
+    if (sinA < -0.5) dy = "0em"
+    else if (sinA > 0.5) dy = "0.7em"
+    return { x, y, anchor, text: criterion.name || "Untitled", dy }
   })
 })
 
@@ -100,15 +135,19 @@ const scoreRingLabels = computed<Label[]>(() => {
     const ratio = score / MAX_SCORE
     const x = CHART_CX + 4
     const y = CHART_CY.value - CHART_R.value * ratio
-    return { x, y, anchor: 'start' as const, text: String(score), dy: '0.35em' }
+    return { x, y, anchor: "start" as const, text: String(score), dy: "0.35em" }
   })
 })
 
-const titleText = computed(() => props.radar.name || 'Untitled radar')
+const titleText = computed(() => props.radar.name || "Untitled radar")
 
 const legendItems = computed(() => {
   // up to 5 profiles — fit in one row if possible, else two rows
-  return props.radar.profiles.map((p) => ({ id: p.id, name: p.name || 'Untitled', color: p.color }))
+  return props.radar.profiles.map((p) => ({
+    id: p.id,
+    name: p.name || "Untitled",
+    color: p.color,
+  }))
 })
 
 const legendLayout = computed(() => {
@@ -132,7 +171,7 @@ const insufficientCriteria = computed(() => props.radar.criteria.length < 3)
     role="img"
     :aria-label="`Radar chart: ${titleText}`"
     class="w-full h-auto"
-    style="font-family: 'Fredoka', ui-sans-serif, system-ui, sans-serif"
+    style="font-family: &quot;Fredoka&quot;, ui-sans-serif, system-ui, sans-serif"
   >
     <rect :width="WIDTH" :height="HEIGHT" fill="#ffffff" />
 
@@ -140,7 +179,7 @@ const insufficientCriteria = computed(() => props.radar.criteria.length < 3)
     <text
       v-if="withChrome !== false"
       :x="WIDTH / 2"
-      :y="TITLE_H / 2 + 4"
+      :y="titleY"
       text-anchor="middle"
       dominant-baseline="middle"
       font-size="28"
@@ -148,6 +187,20 @@ const insufficientCriteria = computed(() => props.radar.criteria.length < 3)
       fill="#0f172a"
     >
       {{ titleText }}
+    </text>
+
+    <!-- Concept (subtitle, wraps to two lines when long) -->
+    <text
+      v-for="(line, i) in subtitleLines"
+      :key="`subtitle-${i}`"
+      :x="WIDTH / 2"
+      :y="subtitleStartY + i * subtitleLineHeight"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      :font-size="subtitleFontSize"
+      fill="#64748b"
+    >
+      {{ line }}
     </text>
 
     <!-- Empty state -->

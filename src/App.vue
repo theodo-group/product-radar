@@ -1,5 +1,4 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <div class="min-h-screen bg-base-200 flex flex-col">
@@ -8,7 +7,7 @@
         <router-link to="/" class="text-xl font-semibold tracking-tight">
           product-radar
         </router-link>
-        <span class="text-xs text-base-content/50">browser-local · 0–5 scale</span>
+        <span class="text-xs text-base-content/50">0–5 scale</span>
       </div>
     </header>
     <main class="flex-1">
