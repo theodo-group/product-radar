@@ -3,11 +3,14 @@ import { computed } from 'vue'
 import type { Radar } from '../types'
 import { MAX_SCORE } from '../types'
 
-const props = defineProps<{
-  radar: Radar
-  /** If true, the SVG renders Radar name (top) and legend (bottom). */
-  withChrome?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    radar: Radar
+    /** Renders the radar name (top) and profile legend (bottom). Defaults to true. */
+    withChrome?: boolean
+  }>(),
+  { withChrome: true },
+)
 
 const WIDTH = 720
 const HEIGHT = computed(() => (props.withChrome === false ? 600 : 800))
