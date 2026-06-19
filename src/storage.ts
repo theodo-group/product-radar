@@ -1,6 +1,14 @@
 import { ref, watch } from "vue"
 import type { Radar, Criterion, Profile } from "./types.ts"
-import { MIN_CRITERIA, MIN_PROFILES, PROFILE_PALETTE } from "./types.ts"
+import {
+  MIN_CRITERIA,
+  MAX_CRITERIA,
+  MIN_PROFILES,
+  MAX_PROFILES,
+  MIN_SCORE,
+  MAX_SCORE,
+  PROFILE_PALETTE,
+} from "./types.ts"
 
 const STORAGE_KEY = "product-radar:radars"
 
@@ -106,9 +114,80 @@ export function useRadars() {
     radar.updatedAt = Date.now()
   }
 
+  function duplicate(id: string): Radar | undefined {
+    const source = get(id)
+    if (!source) return undefined
+    const now = Date.now()
+    const radar: Radar = {
+      ...JSON.parse(JSON.stringify(source)),
+      id: uid(),
+      name: `${source.name || "Untitled radar"} (copy)`,
+      createdAt: now,
+      updatedAt: now,
+    }
+    radars.value.push(radar)
+    return radar
+  }
+
   function remove(id: string): void {
     const idx = radars.value.findIndex((r) => r.id === id)
     if (idx >= 0) radars.value.splice(idx, 1)
+  }
+
+  // Build a fresh, owned radar from an untrusted payload (e.g. a share link).
+  // Everything is validated and clamped — a malformed payload yields undefined
+  // rather than corrupting the store. Inner criterion/profile ids are kept so
+  // the scores map stays consistent; only the radar id and timestamps are new.
+  function importRadar(payload: unknown): Radar | undefined {
+    if (!payload || typeof payload !== "object") return undefined
+    const p = payload as Partial<Radar>
+
+    const criteria: Criterion[] = (Array.isArray(p.criteria) ? p.criteria : [])
+      .filter((c): c is Criterion => !!c && typeof c === "object")
+      .slice(0, MAX_CRITERIA)
+      .map((c) => ({ id: typeof c.id === "string" ? c.id : uid(), name: String(c.name ?? "") }))
+
+    const profiles: Profile[] = (Array.isArray(p.profiles) ? p.profiles : [])
+      .filter((pr): pr is Profile => !!pr && typeof pr === "object")
+      .slice(0, MAX_PROFILES)
+      .map((pr, i) => ({
+        id: typeof pr.id === "string" ? pr.id : uid(),
+        name: String(pr.name ?? ""),
+        color:
+          typeof pr.color === "string" ? pr.color : PROFILE_PALETTE[i % PROFILE_PALETTE.length],
+      }))
+
+    if (criteria.length < MIN_CRITERIA || profiles.length < MIN_PROFILES) return undefined
+
+    const rawScores = (p.scores && typeof p.scores === "object" ? p.scores : {}) as Record<
+      string,
+      Record<string, unknown>
+    >
+    const scores: Radar["scores"] = {}
+    for (const profile of profiles) {
+      scores[profile.id] = {}
+      for (const criterion of criteria) {
+        const v = Number(rawScores[profile.id]?.[criterion.id])
+        scores[profile.id][criterion.id] = Number.isFinite(v)
+          ? Math.min(MAX_SCORE, Math.max(MIN_SCORE, Math.round(v)))
+          : 0
+      }
+    }
+
+    const now = Date.now()
+    const radar: Radar = {
+      id: uid(),
+      name: String(p.name ?? "Shared radar"),
+      concept: String(p.concept ?? ""),
+      criteria,
+      profiles,
+      scores,
+      createdAt: now,
+      updatedAt: now,
+    }
+    ensureScores(radar)
+    radars.value.push(radar)
+    return radar
   }
 
   return {
@@ -117,7 +196,9 @@ export function useRadars() {
     get,
     createBlank,
     update,
+    duplicate,
     remove,
+    importRadar,
     blankCriterion,
     blankProfile,
   }

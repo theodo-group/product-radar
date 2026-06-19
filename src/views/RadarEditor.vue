@@ -7,6 +7,7 @@ import CriteriaEditor from "../components/CriteriaEditor.vue"
 import ProfilesEditor from "../components/ProfilesEditor.vue"
 import ScoreGrid from "../components/ScoreGrid.vue"
 import { svgToPngBlob, downloadBlob, copyBlobToClipboard, slugify } from "../utils/png"
+import { encodeRadar } from "../utils/share"
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
@@ -59,6 +60,18 @@ async function downloadPng(): Promise<void> {
   }
 }
 
+async function copyShareLink(): Promise<void> {
+  if (!radar.value) return
+  const href = router.resolve({ name: "share", query: { d: encodeRadar(radar.value) } }).href
+  try {
+    await navigator.clipboard.writeText(`${location.origin}${href}`)
+    flash("success", "Share link copied")
+  } catch (err) {
+    console.error(err)
+    flash("error", "Could not copy link")
+  }
+}
+
 async function copyPng(): Promise<void> {
   const svg = getSvg()
   if (!svg) return
@@ -99,6 +112,7 @@ async function copyPng(): Promise<void> {
         />
       </div>
       <div class="flex gap-2 mt-1">
+        <button class="btn btn-outline" @click="copyShareLink">Share link</button>
         <button class="btn btn-outline" @click="copyPng">Copy PNG</button>
         <button class="btn btn-primary" @click="downloadPng">Download PNG</button>
       </div>
