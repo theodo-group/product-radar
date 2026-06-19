@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, onMounted, ref } from "vue"
 import type { Radar } from "../types"
 import { MAX_SCORE } from "../types"
 
@@ -110,7 +110,57 @@ const profileShapes = computed<ProfileShape[]>(() => {
 
 type Label = { x: number; y: number; anchor: "start" | "middle" | "end"; text: string; dy: string }
 
-const criterionLabels = computed<Label[]>(() => {
+type CriterionLabel = {
+  x: number
+  y: number
+  anchor: "start" | "middle" | "end"
+  lines: string[]
+  firstDy: number
+}
+
+const LABEL_FONT_SIZE = 14
+const LABEL_LINE_HEIGHT = 17
+const LABEL_MARGIN = 8
+
+// Becomes true once "Fredoka" is loaded so wrapping recomputes with accurate widths.
+const fontReady = ref(false)
+onMounted(() => {
+  const fonts = (document as Document & { fonts?: FontFaceSet }).fonts
+  if (fonts?.ready) fonts.ready.then(() => (fontReady.value = true))
+})
+
+let measureCtx: CanvasRenderingContext2D | null = null
+function textWidth(text: string): number {
+  if (typeof document !== "undefined") {
+    measureCtx ??= document.createElement("canvas").getContext("2d")
+    if (measureCtx) {
+      measureCtx.font = `500 ${LABEL_FONT_SIZE}px "Fredoka", ui-sans-serif, system-ui, sans-serif`
+      return measureCtx.measureText(text).width
+    }
+  }
+  return text.length * LABEL_FONT_SIZE * 0.55
+}
+
+// Greedily word-wrap so each line fits maxWidth; long single words stay on their own line.
+function wrapToWidth(text: string, maxWidth: number): string[] {
+  void fontReady.value // re-wrap once the web font finishes loading
+  const words = text.split(/\s+/).filter(Boolean)
+  if (words.length === 0) return [text]
+  const lines: string[] = []
+  let current = words[0]
+  for (let i = 1; i < words.length; i++) {
+    const candidate = `${current} ${words[i]}`
+    if (textWidth(candidate) <= maxWidth) current = candidate
+    else {
+      lines.push(current)
+      current = words[i]
+    }
+  }
+  lines.push(current)
+  return lines
+}
+
+const criterionLabels = computed<CriterionLabel[]>(() => {
   const total = props.radar.criteria.length
   return props.radar.criteria.map((criterion, i) => {
     const labelRadius = CHART_R.value + 28
@@ -121,11 +171,23 @@ const criterionLabels = computed<Label[]>(() => {
     let anchor: "start" | "middle" | "end" = "middle"
     if (cosA > 0.2) anchor = "start"
     else if (cosA < -0.2) anchor = "end"
+
+    // Horizontal room from the anchor point to the nearest SVG edge.
+    let maxWidth: number
+    if (anchor === "start") maxWidth = WIDTH - x - LABEL_MARGIN
+    else if (anchor === "end") maxWidth = x - LABEL_MARGIN
+    else maxWidth = 2 * Math.min(x - LABEL_MARGIN, WIDTH - x - LABEL_MARGIN)
+
+    const lines = wrapToWidth(criterion.name || "Untitled", maxWidth)
+    const extra = (lines.length - 1) * LABEL_LINE_HEIGHT
+
+    // Stack lines away from the chart: top labels grow upward, bottom downward, sides center.
     const sinA = Math.sin(angle)
-    let dy = "0.35em"
-    if (sinA < -0.5) dy = "0em"
-    else if (sinA > 0.5) dy = "0.7em"
-    return { x, y, anchor, text: criterion.name || "Untitled", dy }
+    let firstDy: number
+    if (sinA < -0.5) firstDy = -extra
+    else if (sinA > 0.5) firstDy = 10
+    else firstDy = 5 - extra / 2
+    return { x, y, anchor, lines, firstDy }
   })
 })
 
@@ -272,19 +334,24 @@ const insufficientCriteria = computed(() => props.radar.criteria.length < 3)
         />
       </g>
 
-      <!-- Criterion labels -->
+      <!-- Criterion labels (word-wrapped to stay inside the canvas) -->
       <text
         v-for="(l, i) in criterionLabels"
         :key="`label-${i}`"
-        :x="l.x"
         :y="l.y"
         :text-anchor="l.anchor"
-        :dy="l.dy"
         font-size="14"
         font-weight="500"
         fill="#0f172a"
       >
-        {{ l.text }}
+        <tspan
+          v-for="(line, j) in l.lines"
+          :key="`label-${i}-${j}`"
+          :x="l.x"
+          :dy="j === 0 ? l.firstDy : LABEL_LINE_HEIGHT"
+        >
+          {{ line }}
+        </tspan>
       </text>
     </g>
 
