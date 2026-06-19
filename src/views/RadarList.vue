@@ -4,7 +4,7 @@ import { useRouter } from "vue-router"
 import { useRadars } from "../storage"
 
 const router = useRouter()
-const { radars, createBlank, remove } = useRadars()
+const { radars, createBlank, duplicate, remove } = useRadars()
 
 const sorted = computed(() => [...radars.value].sort((a, b) => b.updatedAt - a.updatedAt))
 
@@ -65,6 +65,9 @@ function formatDate(ts: number): string {
           </p>
           <p class="text-xs text-base-content/40 mt-1">Updated {{ formatDate(r.updatedAt) }}</p>
           <div class="card-actions justify-end mt-2">
+            <button class="btn btn-ghost btn-xs" @click.stop="duplicate(r.id)">
+              Duplicate
+            </button>
             <button
               class="btn btn-ghost btn-xs text-error"
               @click.stop="confirmDelete(r.id, r.name)"
