@@ -10,7 +10,7 @@ See [CONTEXT.md](./CONTEXT.md) for the domain glossary and [DESIGN.md](./DESIGN.
 
 - Vite + Vue 3 + TypeScript
 - Tailwind CSS v4 + DaisyUI
-- Solo, browser-local persistence (IndexedDB or localStorage)
+- Solo, browser-local persistence via localStorage
 
 ## Develop
 
