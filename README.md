@@ -22,4 +22,7 @@ pnpm build         # production build into ./dist
 
 ## Deploy
 
-Pushes to `main` are picked up by Coolify at https://platform.apoena.dev. The Dockerfile builds the SPA and serves it through nginx on port 80.
+Every push to `main` triggers two independent deployments:
+
+- **Coolify** (primary) — picked up at https://platform.apoena.dev and served at https://product-radar.apoena.dev. The Dockerfile builds the SPA and serves it through nginx on port 80, with `try_files … /index.html` as the history-mode SPA fallback.
+- **GitHub Pages** — `.github/workflows/deploy-pages.yml` builds with pnpm and publishes `dist/`, copying `index.html` to `404.html` as the SPA fallback.
