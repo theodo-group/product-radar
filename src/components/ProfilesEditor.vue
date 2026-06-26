@@ -1,10 +1,23 @@
 <script setup lang="ts">
+import { ref } from "vue"
 import type { Radar } from "../types"
 import { MIN_PROFILES, MAX_PROFILES, PROFILE_PALETTE } from "../types"
 import { useRadars } from "../storage"
+import { useDragReorder } from "../utils/reorder"
 
 const props = defineProps<{ radar: Radar }>()
 const { update, blankProfile } = useRadars()
+
+const listEl = ref<HTMLElement | null>(null)
+const { draggingId, startDrag } = useDragReorder({
+  container: listEl,
+  getIds: () => props.radar.profiles.map((p) => p.id),
+  reorder: (from, to) =>
+    update(props.radar.id, (r) => {
+      const [moved] = r.profiles.splice(from, 1)
+      r.profiles.splice(to, 0, moved)
+    }),
+})
 
 function addProfile(): void {
   update(props.radar.id, (r) => {
@@ -47,13 +60,23 @@ function setColor(profileId: string, color: string): void {
       Each Profile is one shape on the radar (e.g. <em>Us today</em>, <em>Us 2027</em>,
       <em>Acme Corp</em>).
     </p>
-    <ul class="flex flex-col gap-3">
+    <ul ref="listEl" class="flex flex-col gap-3">
       <li
         v-for="p in radar.profiles"
         :key="p.id"
-        class="flex flex-col gap-2 p-3 rounded-lg border border-base-300 bg-base-100"
+        data-reorder-item
+        class="flex flex-col gap-2 p-3 rounded-lg border border-base-300 bg-base-100 transition-opacity"
+        :class="draggingId === p.id ? 'opacity-50' : ''"
       >
         <div class="flex items-center gap-2">
+          <span
+            class="cursor-grab touch-none select-none text-base-content/40 hover:text-base-content/70 active:cursor-grabbing"
+            aria-label="Drag to reorder"
+            title="Drag to reorder"
+            @pointerdown="startDrag($event, p.id)"
+          >
+            ⠿
+          </span>
           <span
             class="inline-block w-4 h-4 rounded"
             :style="{ background: p.color }"

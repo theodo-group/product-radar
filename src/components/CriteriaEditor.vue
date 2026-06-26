@@ -1,10 +1,23 @@
 <script setup lang="ts">
+import { ref } from "vue"
 import type { Radar } from "../types"
 import { MIN_CRITERIA, MAX_CRITERIA } from "../types"
 import { useRadars } from "../storage"
+import { useDragReorder } from "../utils/reorder"
 
 const props = defineProps<{ radar: Radar }>()
 const { update, blankCriterion } = useRadars()
+
+const listEl = ref<HTMLElement | null>(null)
+const { draggingId, startDrag } = useDragReorder({
+  container: listEl,
+  getIds: () => props.radar.criteria.map((c) => c.id),
+  reorder: (from, to) =>
+    update(props.radar.id, (r) => {
+      const [moved] = r.criteria.splice(from, 1)
+      r.criteria.splice(to, 0, moved)
+    }),
+})
 
 function addCriterion(): void {
   update(props.radar.id, (r) => {
@@ -39,8 +52,22 @@ function renameCriterion(criterionId: string, name: string): void {
     <p class="text-xs text-base-content/60 mb-3">
       Phrase each Criterion so higher is better (e.g. <em>Affordability</em>, not <em>Price</em>).
     </p>
-    <ul class="flex flex-col gap-2">
-      <li v-for="c in radar.criteria" :key="c.id" class="flex items-center gap-2">
+    <ul ref="listEl" class="flex flex-col gap-2">
+      <li
+        v-for="c in radar.criteria"
+        :key="c.id"
+        data-reorder-item
+        class="flex items-center gap-2 rounded-lg transition-opacity"
+        :class="draggingId === c.id ? 'opacity-50' : ''"
+      >
+        <span
+          class="cursor-grab touch-none select-none px-1 text-base-content/40 hover:text-base-content/70 active:cursor-grabbing"
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
+          @pointerdown="startDrag($event, c.id)"
+        >
+          ⠿
+        </span>
         <input
           type="text"
           class="input input-bordered input-sm flex-1"
