@@ -4,7 +4,7 @@ Compare up to 5 Profiles across 3–7 Criteria on a 0–5 scale, export the rada
 
 Deployed at https://product-radar.apoena.dev.
 
-See [CONTEXT.md](./CONTEXT.md) for the domain glossary.
+See [CONTEXT.md](./CONTEXT.md) for the domain glossary and [DESIGN.md](./DESIGN.md) for the goal-driven design (QFD). Architecture decisions live in [docs/adr/](./docs/adr/).
 
 ## Stack
 
